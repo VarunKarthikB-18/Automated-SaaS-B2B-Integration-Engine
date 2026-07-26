@@ -5,7 +5,22 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0%2B-red.svg)](https://www.sqlalchemy.org/)
+[![Live on Render](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?logo=render&logoColor=white)](https://b2b-saas-integration-engine.onrender.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+---
+
+## 🌐 Live Demo
+
+> **API is live and publicly accessible:**
+>
+> | URL | Description |
+> |---|---|
+> | 🚀 [b2b-saas-integration-engine.onrender.com](https://b2b-saas-integration-engine.onrender.com/) | Root → redirects to Swagger UI |
+> | 📄 [/docs](https://b2b-saas-integration-engine.onrender.com/docs) | Interactive Swagger UI |
+> | 📘 [/redoc](https://b2b-saas-integration-engine.onrender.com/redoc) | ReDoc API reference |
+> | ❤️ [/health](https://b2b-saas-integration-engine.onrender.com/health) | Health check |
+> | 🔁 [/api/v1/sync](https://b2b-saas-integration-engine.onrender.com/docs#/Data%20Pipeline/sync_customer_api_v1_sync_post) | POST – sync a customer record |
 
 ---
 
