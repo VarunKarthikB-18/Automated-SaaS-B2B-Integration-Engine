@@ -4,6 +4,7 @@ POST /api/v1/sync  →  clean → map → validate → persist
 """
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Any
@@ -57,6 +58,12 @@ app.add_middleware(
 # ── Singletons ─────────────────────────────────────────────────────────────────
 cleaner = DataCleaner()
 mapper = ColumnMappingAgent()
+
+
+# ── Root redirect ─────────────────────────────────────────────────────────────
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/docs")
 
 
 # ── Health ─────────────────────────────────────────────────────────────────────

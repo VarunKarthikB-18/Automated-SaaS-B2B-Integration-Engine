@@ -52,8 +52,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-b2b_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-b2b_password}
       # LLM
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
       # App
       SQL_ECHO: ${SQL_ECHO:-false}
       LOG_LEVEL: ${LOG_LEVEL:-info}
