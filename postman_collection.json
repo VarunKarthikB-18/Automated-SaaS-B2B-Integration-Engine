@@ -1,0 +1,224 @@
+{
+  "info": {
+    "_postman_id": "b2b-saas-integration-engine-v1",
+    "name": "B2B SaaS Integration Engine",
+    "description": "Automated customer onboarding data pipeline.\n\nEndpoints:\n- GET  /health           – Liveness check\n- POST /api/v1/sync      – Sync a customer record through the full pipeline\n\nSet the `baseUrl` variable to change the target host (default: http://localhost:8000).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string",
+      "description": "Base URL of the running FastAPI server"
+    }
+  ],
+  "item": [
+    {
+      "name": "Infrastructure",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Returns `{\"status\": \"ok\"}` when the API is running."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"status\": \"ok\",\n  \"timestamp\": \"2025-07-26T13:00:00.000000\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Data Pipeline",
+      "item": [
+        {
+          "name": "Sync – HubSpot Messy Payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"hubspot\",\n  \"data\": {\n    \"fname\":          \"  Alice  \",\n    \"lname\":          \"Smith\",\n    \"email_address\":  \"alice@acme.com\",\n    \"cell_phone_v2\":  \"+1 (555) 867-5309\",\n    \"company\":        \"  Acme   Corp  \",\n    \"tier\":           \"PRO\",\n    \"signup_date\":    \"26/07/2025\",\n    \"mrr_usd\":        \"$4,200\",\n    \"active\":         \"yes\",\n    \"country_code\":   \"us\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sync"]
+            },
+            "description": "Simulates a messy HubSpot export.\n\nPipeline steps:\n1. Cleans whitespace, parses date, coerces mrr/boolean\n2. Maps: fname→first_name, cell_phone_v2→phone_number, tier→plan_type, mrr_usd→mrr, active→is_active, country_code→country\n3. Validates with Pydantic CustomerRecord\n4. Inserts into DB and returns canonical record"
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"trace_id\":  \"a3f2c1d4-7b8e-4f2a-9c0d-1e2f3a4b5c6d\",\n  \"status\":    \"success\",\n  \"record_id\": \"e5d4c3b2-a1f0-4e3d-8c7b-6a5f4e3d2c1b\",\n  \"canonical\": {\n    \"first_name\":   \"Alice\",\n    \"last_name\":    \"Smith\",\n    \"email\":        \"alice@acme.com\",\n    \"phone_number\": \"+1 (555) 867-5309\",\n    \"company_name\": \"Acme Corp\",\n    \"plan_type\":    \"pro\",\n    \"signup_date\":  \"2025-07-26\",\n    \"mrr\":          4200.0,\n    \"is_active\":    true,\n    \"country\":      \"US\"\n  },\n  \"synced_at\": \"2025-07-26T13:00:00.000000\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Sync – Salesforce Style Payload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"salesforce\",\n  \"data\": {\n    \"FirstName\":          \"Bob\",\n    \"LastName\":           \"Johnson\",\n    \"Email\":              \"bob.johnson@techcorp.io\",\n    \"MobilePhone\":        \"+44 7911 123456\",\n    \"Account.Name\":       \"TechCorp Ltd\",\n    \"Subscription_Plan__c\": \"enterprise\",\n    \"CreatedDate\":        \"2025-01-15T09:30:00Z\",\n    \"MRR__c\":             \"12500\",\n    \"IsActive__c\":        true,\n    \"BillingCountry\":     \"United Kingdom\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sync"]
+            },
+            "description": "Simulates a Salesforce SOQL export with Pascal-case field names and custom fields (__c suffix)."
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"trace_id\":  \"b4e3d2c1-8a9f-4b3c-0d1e-2f3a4b5c6d7e\",\n  \"status\":    \"success\",\n  \"record_id\": \"f6e5d4c3-b2a1-4f3e-9d8c-7b6a5f4e3d2c\",\n  \"canonical\": {\n    \"first_name\":   \"Bob\",\n    \"last_name\":    \"Johnson\",\n    \"email\":        \"bob.johnson@techcorp.io\",\n    \"phone_number\": \"+44 7911 123456\",\n    \"company_name\": \"TechCorp Ltd\",\n    \"plan_type\":    \"enterprise\",\n    \"signup_date\":  \"2025-01-15\",\n    \"mrr\":          12500.0,\n    \"is_active\":    true,\n    \"country\":      \"United Kingdom\"\n  },\n  \"synced_at\": \"2025-07-26T13:05:00.000000\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Sync – Minimal Payload (Email Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"manual\",\n  \"data\": {\n    \"email\": \"minimal@example.com\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sync"]
+            },
+            "description": "Only `email` is required. All other fields will be null. Tests the minimum valid payload."
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"trace_id\":  \"c5f4e3d2-9b0a-4c4d-1e2f-3a4b5c6d7e8f\",\n  \"status\":    \"success\",\n  \"record_id\": \"07e6f5d4-c3b2-4a1f-0e9d-8c7b6a5f4e3d\",\n  \"canonical\": {\n    \"first_name\":   null,\n    \"last_name\":    null,\n    \"email\":        \"minimal@example.com\",\n    \"phone_number\": null,\n    \"company_name\": null,\n    \"plan_type\":    null,\n    \"signup_date\":  null,\n    \"mrr\":          null,\n    \"is_active\":    null,\n    \"country\":      null\n  },\n  \"synced_at\": \"2025-07-26T13:10:00.000000\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Sync – Null-Sentinel Values",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"legacy_csv_import\",\n  \"data\": {\n    \"email\":        \"carol@startup.com\",\n    \"first_name\":   \"Carol\",\n    \"last_name\":    \"N/A\",\n    \"phone_number\": \"NULL\",\n    \"company_name\": \"none\",\n    \"plan_type\":    \"starter\",\n    \"signup_date\":  \"undefined\",\n    \"mrr\":          \"-\",\n    \"is_active\":    \"1\",\n    \"country\":      \"IN\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sync"]
+            },
+            "description": "Tests null-sentinel detection. Values like `\"N/A\"`, `\"NULL\"`, `\"none\"`, `\"undefined\"`, `\"-\"` are all converted to Python `None`."
+          },
+          "response": [
+            {
+              "name": "200 Success – nulls cleaned",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"trace_id\":  \"d6a5b4c3-0c1b-4d5e-2f3a-4b5c6d7e8f9a\",\n  \"status\":    \"success\",\n  \"record_id\": \"18f7a6e5-d4c3-4b2a-1f0e-9d8c7b6a5f4e\",\n  \"canonical\": {\n    \"first_name\":   \"Carol\",\n    \"last_name\":    null,\n    \"email\":        \"carol@startup.com\",\n    \"phone_number\": null,\n    \"company_name\": null,\n    \"plan_type\":    \"starter\",\n    \"signup_date\":  null,\n    \"mrr\":          null,\n    \"is_active\":    true,\n    \"country\":      \"IN\"\n  },\n  \"synced_at\": \"2025-07-26T13:15:00.000000\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Sync – Invalid Payload (Missing Email → 422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"test\",\n  \"data\": {\n    \"first_name\": \"Dave\",\n    \"last_name\":  \"Missing Email\",\n    \"plan_type\":  \"pro\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sync"]
+            },
+            "description": "Email is required. This request should return HTTP 422 Unprocessable Entity."
+          },
+          "response": [
+            {
+              "name": "422 Validation Error",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"detail\": \"Validation error: email is required and cannot be empty\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Sync – Invalid Email Format → 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"test\",\n  \"data\": {\n    \"email\":      \"not-a-valid-email\",\n    \"first_name\": \"Eve\",\n    \"plan_type\":  \"free\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sync"]
+            },
+            "description": "Tests Pydantic EmailStr validation. Malformed email addresses are rejected with HTTP 422."
+          },
+          "response": [
+            {
+              "name": "422 Invalid Email",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"detail\": \"Validation error: value is not a valid email address ...\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

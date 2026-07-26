@@ -1,0 +1,73 @@
+version: "3.9"
+
+# ── Named volumes ──────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+
+# ── Network ────────────────────────────────────────────────────────────────────
+networks:
+  b2b_net:
+    driver: bridge
+
+# ══════════════════════════════════════════════════════════════════════════════
+services:
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: b2b_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-b2b_integration}
+      POSTGRES_USER: ${POSTGRES_USER:-b2b_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-b2b_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - b2b_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-b2b_user} -d ${POSTGRES_DB:-b2b_integration}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── FastAPI application ───────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: b2b_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-b2b_integration}
+      POSTGRES_USER: ${POSTGRES_USER:-b2b_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-b2b_password}
+      # LLM
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      # App
+      SQL_ECHO: ${SQL_ECHO:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "8000:8000"
+    networks:
+      - b2b_net
+    volumes:
+      # Hot-reload in development: mount source into container
+      - .:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
