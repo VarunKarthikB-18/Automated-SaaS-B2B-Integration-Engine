@@ -9,3 +9,7 @@ build/
 .pytest_cache/
 .mypy_cache/
 *.log
+# SQLite local databases – never commit these
+*.db
+*.sqlite
+*.sqlite3
