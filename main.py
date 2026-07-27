@@ -3,15 +3,17 @@ B2B SaaS Integration Engine - FastAPI Entry Point
 POST /api/v1/sync  →  clean → map → validate → persist
 """
 
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Any
 import logging
 import uuid
 from datetime import datetime
+
+BASE_DIR = Path(__file__).resolve().parent
 
 from database import get_db, engine
 from models import Base, CustomerRecord, SyncRequest, SyncResponse, SyncStatus
@@ -61,14 +63,12 @@ cleaner = DataCleaner()
 mapper = ColumnMappingAgent()
 
 
-# ── Templates ─────────────────────────────────────────────────────────────────
-templates = Jinja2Templates(directory="templates")
-
-
 # ── Root – serve SyncEngine UI ────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
-def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def serve_dashboard():
+    template_path = BASE_DIR / "templates" / "index.html"
+    with open(template_path, "r", encoding="utf-8") as f:
+        return f.read()
 
 
 # ── Health ─────────────────────────────────────────────────────────────────────
