@@ -1,0 +1,438 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SyncEngine | Advanced Data Normalization</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+        .code-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .code-container::-webkit-scrollbar-track {
+            background: #f9fafb;
+        }
+        .code-container::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+        .custom-glass {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+        .pipeline-stage {
+            transition: all 0.3s ease;
+        }
+        .pipeline-stage.active {
+            transform: scale(1.05);
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .status-dot {
+            animation: pulse-ring 2s infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#575e70",
+                      "secondary-container": "#6063ee",
+                      "on-secondary-fixed": "#07006c",
+                      "tertiary-fixed": "#f9debf",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#968065",
+                      "on-primary-fixed": "#141b2b",
+                      "on-surface-variant": "#45464c",
+                      "primary-fixed-dim": "#c0c6db",
+                      "primary-fixed": "#dce2f7",
+                      "surface-variant": "#e5e2e3",
+                      "secondary-fixed-dim": "#c0c1ff",
+                      "surface-dim": "#dcd9db",
+                      "inverse-on-surface": "#f3f0f1",
+                      "outline-variant": "#c6c6cd",
+                      "surface-container-low": "#f6f3f4",
+                      "error-container": "#ffdad6",
+                      "on-secondary-fixed-variant": "#2f2ebe",
+                      "on-primary-fixed-variant": "#404758",
+                      "tertiary": "#000000",
+                      "on-primary": "#ffffff",
+                      "inverse-primary": "#c0c6db",
+                      "background": "#fcf8fa",
+                      "secondary": "#4648d4",
+                      "outline": "#76777d",
+                      "surface-container": "#f0edee",
+                      "surface-container-high": "#eae7e9",
+                      "on-tertiary-fixed-variant": "#55442d",
+                      "tertiary-container": "#261906",
+                      "primary-container": "#141b2b",
+                      "on-error-container": "#93000a",
+                      "on-tertiary": "#ffffff",
+                      "inverse-surface": "#303031",
+                      "secondary-fixed": "#e1e0ff",
+                      "surface-bright": "#fcf8fa",
+                      "on-secondary-container": "#fffbff",
+                      "on-surface": "#1b1b1d",
+                      "on-primary-container": "#7d8497",
+                      "primary": "#000000",
+                      "tertiary-fixed-dim": "#dcc2a4",
+                      "on-background": "#1b1b1d",
+                      "surface-container-highest": "#e5e2e3",
+                      "on-error": "#ffffff",
+                      "error": "#ba1a1a",
+                      "surface": "#fcf8fa",
+                      "on-tertiary-fixed": "#261906",
+                      "on-secondary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "lg": "24px",
+                      "xl": "32px",
+                      "base": "4px",
+                      "gutter": "24px",
+                      "md": "16px",
+                      "container-max": "1280px",
+                      "margin-mobile": "16px",
+                      "xs": "4px",
+                      "sm": "8px",
+                      "2xl": "48px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Manrope"],
+                      "headline-lg-mobile": ["Manrope"],
+                      "title-md": ["Manrope"],
+                      "label-caps": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "display-lg": ["Manrope"],
+                      "label-code": ["JetBrains Mono"],
+                      "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                      "label-code": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-[#f3f4f6]">
+<!-- TopNavBar -->
+<nav class="bg-surface dark:bg-surface shadow-sm w-full px-gutter py-md sticky top-0 z-50">
+<div class="flex justify-between items-center max-w-container-max mx-auto px-margin-mobile md:px-gutter">
+<div class="flex items-center gap-8">
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary">SyncEngine</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-body-lg text-body-lg hover:text-secondary transition-colors duration-200" href="#">Playground</a>
+<a class="text-on-surface-variant font-body-lg text-body-lg hover:text-secondary transition-colors duration-200" href="/docs" target="_blank">API Docs</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-2 py-1 bg-transparent">
+<div class="w-2 h-2 rounded-full bg-emerald-500 status-dot"></div>
+<span class="text-[12px] font-medium text-on-surface-variant">System: Healthy</span>
+</div>
+<a href="/docs" target="_blank" class="bg-primary text-on-primary px-6 py-2 rounded-full font-semibold hover:scale-95 transition-transform active:scale-90 inline-block text-center no-underline">
+    Console
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Workspace -->
+<main class="max-w-container-max mx-auto px-gutter py-xl">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-xl">
+<!-- Left Column: Source Payload -->
+<section class="flex flex-col gap-lg">
+<div class="bg-white rounded-xl shadow-sm p-xl min-h-[720px] flex flex-col border border-gray-100">
+<div class="flex flex-col gap-md mb-lg">
+<div class="flex justify-between items-center">
+<h2 class="font-title-md text-title-md text-primary">Raw CRM Input</h2>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface-container-low text-body-sm font-medium hover:bg-secondary-fixed-dim transition-colors duration-200" onclick="setSource('hubspot')">HubSpot</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface-container-low text-body-sm font-medium hover:bg-secondary-fixed-dim transition-colors duration-200" onclick="setSource('salesforce')">Salesforce</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface-container-low text-body-sm font-medium hover:bg-secondary-fixed-dim transition-colors duration-200" onclick="setSource('messy')">Messy JSON</button>
+</div>
+</div>
+</div>
+<div class="flex-grow relative rounded-lg overflow-hidden border border-gray-100 bg-[#f9fafb]">
+<div class="absolute top-3 left-4 flex gap-1.5">
+<div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+</div>
+<textarea class="w-full h-full pt-10 pb-4 px-4 bg-transparent border-none focus:ring-0 font-label-code text-label-code text-on-surface-variant resize-none overflow-auto code-container" id="source-payload" spellcheck="false">{
+  "source": "legacy_crm",
+  "data": {
+    "fname": "  Johnathan  ",
+    "surname": "Doe-Smith",
+    "email_addr": "j.doe@enterprise-corp.io",
+    "cell_phone_v2": "+1 (555) 867-5309",
+    "company": "Enterprise Corp",
+    "tier": "PRO",
+    "signup_date": "20/11/2023",
+    "mrr_usd": "$4,200",
+    "active": "yes",
+    "country_code": "US"
+  }
+}</textarea>
+</div>
+<div class="mt-xl flex justify-center">
+<button id="execute-btn" class="bg-primary text-on-primary px-xl py-lg rounded-full font-headline-lg-mobile text-body-lg flex items-center gap-3 shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-200 group" onclick="executePipeline()">
+<span>Execute Integration Pipeline</span>
+<span class="group-hover:translate-x-1 transition-transform">🚀</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Right Column: Engine Output -->
+<section class="flex flex-col gap-lg">
+<div class="bg-white rounded-xl shadow-sm p-xl min-h-[720px] flex flex-col border border-gray-100 relative overflow-hidden">
+<!-- Subtle Glow Effect -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-secondary/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col gap-md mb-lg relative z-10">
+<h2 class="font-title-md text-title-md text-primary">Normalized Canonical Output</h2>
+<div class="flex flex-wrap gap-2" id="stage-badges">
+<div class="pipeline-stage flex items-center gap-2 px-2.5 py-1 bg-white text-gray-700 rounded-lg border border-gray-200 shadow-sm">
+<div class="w-1.5 h-1.5 rounded-full bg-gray-400" id="badge-cleaned-dot"></div>
+<span class="text-[11px] font-bold uppercase tracking-wider">Cleaned</span>
+</div>
+<div class="pipeline-stage flex items-center gap-2 px-2.5 py-1 bg-white text-secondary rounded-lg border border-secondary/20 shadow-sm">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary" id="badge-mapped-dot"></div>
+<span class="text-[11px] font-bold uppercase tracking-wider">Mapped</span>
+</div>
+<div class="pipeline-stage flex items-center gap-2 px-2.5 py-1 bg-white text-blue-700 rounded-lg border border-blue-200 shadow-sm">
+<div class="w-1.5 h-1.5 rounded-full bg-blue-500" id="badge-validated-dot"></div>
+<span class="text-[11px] font-bold uppercase tracking-wider">Validated</span>
+</div>
+<div class="pipeline-stage flex items-center gap-2 px-2.5 py-1 bg-white text-emerald-700 rounded-lg border border-emerald-200 shadow-sm">
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-500" id="badge-persisted-dot"></div>
+<span class="text-[11px] font-bold uppercase tracking-wider">Persisted</span>
+</div>
+</div>
+</div>
+<div class="flex-grow rounded-lg overflow-hidden border border-gray-100 bg-[#111827] shadow-inner relative">
+<div class="absolute top-3 right-4 flex items-center gap-4 text-gray-500 font-label-code text-[11px]" id="trace-bar">
+<span id="trace-id-display">TRACE_ID: waiting...</span>
+<button class="hover:text-white transition-colors" onclick="copyOutput()" title="Copy output">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+<pre class="w-full h-full p-xl font-label-code text-label-code overflow-auto code-container" id="output-pre"><code id="output-code" class="text-gray-500">// Output will appear here after execution.
+// Paste your raw CRM payload on the left,
+// then click Execute Integration Pipeline.</code></pre>
+</div>
+<!-- Error banner -->
+<div id="error-banner" class="hidden mt-md p-md bg-red-50 border border-red-200 rounded-lg text-red-700 text-body-sm font-medium"></div>
+</div>
+</section>
+</div>
+<!-- Bottom Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg mt-2xl">
+<div class="bg-white p-lg rounded-xl shadow-sm border border-gray-100 flex flex-col gap-sm">
+<span class="material-symbols-outlined text-secondary">schema</span>
+<h3 class="font-title-md text-body-lg font-bold">Auto-Schema Detection</h3>
+<p class="text-body-sm text-on-surface-variant">Intelligently identifies field types even in deeply nested messy structures.</p>
+</div>
+<div class="bg-white p-lg rounded-xl shadow-sm border border-gray-100 flex flex-col gap-sm">
+<span class="material-symbols-outlined text-purple-500">memory</span>
+<h3 class="font-title-md text-body-lg font-bold">Neural Mapping</h3>
+<p class="text-body-sm text-on-surface-variant">Powered by Google Gemini 2.0 Flash for zero-shot data transformations.</p>
+</div>
+<div class="bg-white p-lg rounded-xl shadow-sm border border-gray-100 flex flex-col gap-sm">
+<span class="material-symbols-outlined text-emerald-500">history</span>
+<h3 class="font-title-md text-body-lg font-bold">Audit Trails</h3>
+<p class="text-body-sm text-on-surface-variant">Immutable UUID trace logs for every field transformation and mapping decision.</p>
+</div>
+</div>
+</main>
+
+<script>
+    const payloads = {
+        hubspot: `{
+  "source": "hubspot",
+  "data": {
+    "firstname": "Johnathan",
+    "lastname": "Doe-Smith",
+    "email": "j.doe@enterprise-corp.io",
+    "cell_phone_v2": "+1 (555) 867-5309",
+    "company": "Enterprise Corp",
+    "lifecyclestage": "customer",
+    "signup_date": "2023-11-20",
+    "mrr_usd": "$4,200",
+    "hs_lead_status": "CLOSED_WON",
+    "active": "yes"
+  }
+}`,
+        salesforce: `{
+  "source": "salesforce",
+  "data": {
+    "FirstName": "Johnathan",
+    "LastName": "Doe-Smith",
+    "Email": "j.doe@enterprise-corp.io",
+    "MobilePhone": "+1 (555) 867-5309",
+    "account_name": "Enterprise Corp",
+    "Subscription_Plan__c": "enterprise",
+    "CreatedDate": "2023-11-20T09:30:00Z",
+    "MRR__c": "12500",
+    "IsActive__c": true,
+    "BillingCountry": "United States"
+  }
+}`,
+        messy: `{
+  "source": "legacy_csv",
+  "data": {
+    "fname": "  JOHNATHAN  ",
+    "lname": "DOE-SMITH",
+    "email_address": "j.doe@enterprise-corp.io",
+    "cell_phone_v2": "+1 (555) 867-5309",
+    "business_name": "Enterprise Corp",
+    "tier": "GOLD",
+    "signup_date": "20/11/2023",
+    "monthly_revenue": "$8,750",
+    "active": "1",
+    "country_code": "US"
+  }
+}`
+    };
+
+    function setSource(type) {
+        document.getElementById('source-payload').value = payloads[type];
+        const buttons = document.querySelectorAll('button[onclick^="setSource"]');
+        buttons.forEach(btn => {
+            btn.classList.remove('bg-secondary-fixed', 'border-secondary', 'text-secondary');
+            if (btn.innerText.toLowerCase().includes(type.toLowerCase())) {
+                btn.classList.add('bg-secondary-fixed', 'border-secondary', 'text-secondary');
+            }
+        });
+    }
+
+    function syntaxHighlight(json) {
+        const escaped = json
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        return escaped.replace(
+            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+            match => {
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) return `<span class="text-blue-400">${match}</span>`;
+                    return `<span class="text-orange-300">${match}</span>`;
+                }
+                if (/true|false/.test(match)) return `<span class="text-emerald-400">${match}</span>`;
+                if (/null/.test(match))       return `<span class="text-red-400">${match}</span>`;
+                return `<span class="text-purple-400">${match}</span>`;
+            }
+        );
+    }
+
+    async function executePipeline() {
+        const btn = document.getElementById('execute-btn');
+        const outputCode = document.getElementById('output-code');
+        const traceDisplay = document.getElementById('trace-id-display');
+        const errorBanner = document.getElementById('error-banner');
+        const stages = document.querySelectorAll('.pipeline-stage');
+
+        // Hide previous error
+        errorBanner.classList.add('hidden');
+        errorBanner.textContent = '';
+
+        // Parse input
+        let payload;
+        try {
+            payload = JSON.parse(document.getElementById('source-payload').value);
+        } catch (e) {
+            errorBanner.textContent = '❌ Invalid JSON in input. Please check your payload format.';
+            errorBanner.classList.remove('hidden');
+            return;
+        }
+
+        // Loading state
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin inline-block material-symbols-outlined text-[20px]">sync</span> <span>Processing...</span>';
+        outputCode.className = 'text-gray-400';
+        outputCode.innerHTML = '// Executing pipeline...';
+        traceDisplay.textContent = 'TRACE_ID: processing...';
+        stages.forEach(s => s.classList.remove('active'));
+
+        try {
+            const response = await fetch('/api/v1/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || `HTTP ${response.status}`);
+            }
+
+            // Animate stages sequentially
+            const stageNames = ['Cleaned', 'Mapped', 'Validated', 'Persisted'];
+            for (let i = 0; i < stages.length; i++) {
+                await new Promise(r => setTimeout(r, 200));
+                stages[i].classList.add('active');
+            }
+
+            // Update trace ID
+            traceDisplay.textContent = `TRACE_ID: ${result.trace_id?.slice(0, 18) || 'n/a'}`;
+
+            // Display result
+            outputCode.className = 'text-green-400';
+            outputCode.innerHTML = syntaxHighlight(JSON.stringify(result, null, 2));
+
+        } catch (err) {
+            outputCode.className = 'text-red-400';
+            outputCode.innerHTML = `// Pipeline error\n// ${err.message}`;
+            errorBanner.textContent = `❌ ${err.message}`;
+            errorBanner.classList.remove('hidden');
+            traceDisplay.textContent = 'TRACE_ID: error';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span>Execute Integration Pipeline</span><span class="group-hover:translate-x-1 transition-transform">🚀</span>';
+        }
+    }
+
+    function copyOutput() {
+        const text = document.getElementById('output-code').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.querySelector('button[onclick="copyOutput()"]');
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-emerald-400">check</span>';
+            setTimeout(() => {
+                btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">content_copy</span>';
+            }, 1500);
+        });
+    }
+
+    // Allow Ctrl+Enter to execute
+    document.getElementById('source-payload').addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') executePipeline();
+    });
+</script>
+</body></html>
