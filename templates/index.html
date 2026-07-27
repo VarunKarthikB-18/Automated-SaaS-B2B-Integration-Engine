@@ -1,438 +1,495 @@
-<!DOCTYPE html><html class="light" lang="en" style=""><head>
-<meta charset="utf-8">
-<meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>SyncEngine | Advanced Data Normalization</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SyncEngine | B2B SaaS Integration Engine</title>
+<meta name="description" content="Automated customer onboarding data pipeline — clean, map, validate and persist messy CRM payloads in one API call." />
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+          display: ['Manrope', 'sans-serif'],
+        },
+        colors: {
+          brand: { DEFAULT: '#4648d4', light: '#e1e0ff', dim: '#c0c1ff' },
+        },
+      },
+    },
+  };
+</script>
 <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #111827;
-        }
-        .code-container::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        .code-container::-webkit-scrollbar-track {
-            background: #f9fafb;
-        }
-        .code-container::-webkit-scrollbar-thumb {
-            background: #e5e7eb;
-            border-radius: 10px;
-        }
-        .custom-glass {
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.8);
-        }
-        .pipeline-stage {
-            transition: all 0.3s ease;
-        }
-        .pipeline-stage.active {
-            transform: scale(1.05);
-        }
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-        .status-dot {
-            animation: pulse-ring 2s infinite;
-        }
-    </style>
-<script id="tailwind-config">
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              "colors": {
-                      "surface-tint": "#575e70",
-                      "secondary-container": "#6063ee",
-                      "on-secondary-fixed": "#07006c",
-                      "tertiary-fixed": "#f9debf",
-                      "surface-container-lowest": "#ffffff",
-                      "on-tertiary-container": "#968065",
-                      "on-primary-fixed": "#141b2b",
-                      "on-surface-variant": "#45464c",
-                      "primary-fixed-dim": "#c0c6db",
-                      "primary-fixed": "#dce2f7",
-                      "surface-variant": "#e5e2e3",
-                      "secondary-fixed-dim": "#c0c1ff",
-                      "surface-dim": "#dcd9db",
-                      "inverse-on-surface": "#f3f0f1",
-                      "outline-variant": "#c6c6cd",
-                      "surface-container-low": "#f6f3f4",
-                      "error-container": "#ffdad6",
-                      "on-secondary-fixed-variant": "#2f2ebe",
-                      "on-primary-fixed-variant": "#404758",
-                      "tertiary": "#000000",
-                      "on-primary": "#ffffff",
-                      "inverse-primary": "#c0c6db",
-                      "background": "#fcf8fa",
-                      "secondary": "#4648d4",
-                      "outline": "#76777d",
-                      "surface-container": "#f0edee",
-                      "surface-container-high": "#eae7e9",
-                      "on-tertiary-fixed-variant": "#55442d",
-                      "tertiary-container": "#261906",
-                      "primary-container": "#141b2b",
-                      "on-error-container": "#93000a",
-                      "on-tertiary": "#ffffff",
-                      "inverse-surface": "#303031",
-                      "secondary-fixed": "#e1e0ff",
-                      "surface-bright": "#fcf8fa",
-                      "on-secondary-container": "#fffbff",
-                      "on-surface": "#1b1b1d",
-                      "on-primary-container": "#7d8497",
-                      "primary": "#000000",
-                      "tertiary-fixed-dim": "#dcc2a4",
-                      "on-background": "#1b1b1d",
-                      "surface-container-highest": "#e5e2e3",
-                      "on-error": "#ffffff",
-                      "error": "#ba1a1a",
-                      "surface": "#fcf8fa",
-                      "on-tertiary-fixed": "#261906",
-                      "on-secondary": "#ffffff"
-              },
-              "borderRadius": {
-                      "DEFAULT": "1rem",
-                      "lg": "2rem",
-                      "xl": "3rem",
-                      "full": "9999px"
-              },
-              "spacing": {
-                      "lg": "24px",
-                      "xl": "32px",
-                      "base": "4px",
-                      "gutter": "24px",
-                      "md": "16px",
-                      "container-max": "1280px",
-                      "margin-mobile": "16px",
-                      "xs": "4px",
-                      "sm": "8px",
-                      "2xl": "48px"
-              },
-              "fontFamily": {
-                      "headline-lg": ["Manrope"],
-                      "headline-lg-mobile": ["Manrope"],
-                      "title-md": ["Manrope"],
-                      "label-caps": ["Inter"],
-                      "body-lg": ["Inter"],
-                      "display-lg": ["Manrope"],
-                      "label-code": ["JetBrains Mono"],
-                      "body-sm": ["Inter"]
-              },
-              "fontSize": {
-                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
-                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
-                      "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
-                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
-                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
-                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
-                      "label-code": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
-                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
-              }
-            },
-          },
-        }
-    </script>
+  :root { --bg: #f3f4f6; }
+  body  { background: var(--bg); font-family: 'Inter', sans-serif; color: #111827; }
+
+  /* scrollbars */
+  .scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scroll::-webkit-scrollbar-track { background: transparent; }
+  .scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
+  .dark-scroll::-webkit-scrollbar-thumb { background: #374151; }
+
+  /* toast */
+  #toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: #111827; color: #f9fafb; padding: .6rem 1.4rem;
+    border-radius: 9999px; font-size: 13px; font-weight: 500; letter-spacing: .02em;
+    opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease;
+    z-index: 9999;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* pulse on status dot */
+  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .status-pulse { animation: pulse-dot 2.5s ease-in-out infinite; }
+
+  /* stage badge spin on load */
+  @keyframes badge-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+  .badge-anim { animation: badge-in .3s ease forwards; }
+
+  /* active nav link */
+  .nav-active { font-weight: 700; border-bottom: 2px solid #111827; }
+</style>
 </head>
-<body class="bg-[#f3f4f6]">
-<!-- TopNavBar -->
-<nav class="bg-surface dark:bg-surface shadow-sm w-full px-gutter py-md sticky top-0 z-50">
-<div class="flex justify-between items-center max-w-container-max mx-auto px-margin-mobile md:px-gutter">
-<div class="flex items-center gap-8">
-<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary">SyncEngine</span>
-<div class="hidden md:flex items-center gap-6">
-<a class="text-primary font-bold border-b-2 border-primary pb-1 font-body-lg text-body-lg hover:text-secondary transition-colors duration-200" href="#">Playground</a>
-<a class="text-on-surface-variant font-body-lg text-body-lg hover:text-secondary transition-colors duration-200" href="/docs" target="_blank">API Docs</a>
-</div>
-</div>
-<div class="flex items-center gap-4">
-<div class="flex items-center gap-2 px-2 py-1 bg-transparent">
-<div class="w-2 h-2 rounded-full bg-emerald-500 status-dot"></div>
-<span class="text-[12px] font-medium text-on-surface-variant">System: Healthy</span>
-</div>
-<a href="/docs" target="_blank" class="bg-primary text-on-primary px-6 py-2 rounded-full font-semibold hover:scale-95 transition-transform active:scale-90 inline-block text-center no-underline">
-    Console
-</a>
-</div>
-</div>
+<body>
+
+<!-- ══ TOP NAV ═══════════════════════════════════════════════════════════════ -->
+<nav class="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+
+    <!-- Logo -->
+    <a href="/" class="flex items-center gap-2 no-underline select-none">
+      <span class="text-lg font-display font-bold text-gray-900 tracking-tight">SyncEngine</span>
+      <span class="hidden sm:inline text-xs font-mono bg-brand-light text-brand px-2 py-0.5 rounded-full">v1.0</span>
+    </a>
+
+    <!-- Nav links -->
+    <div class="hidden md:flex items-center gap-6 text-sm">
+      <a href="/" id="nav-playground" class="nav-active pb-0.5 text-gray-900 transition-colors hover:text-brand">Playground</a>
+      <a href="/docs" target="_blank" rel="noopener" class="text-gray-500 hover:text-brand transition-colors pb-0.5">API Docs ↗</a>
+    </div>
+
+    <!-- Right cluster -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-1.5 text-xs text-gray-500">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 status-pulse inline-block"></span>
+        <span class="hidden sm:inline">System: Healthy</span>
+      </div>
+      <a href="/docs" target="_blank" rel="noopener"
+         class="bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 rounded-full hover:bg-gray-700 active:scale-95 transition-all no-underline">
+        Console
+      </a>
+    </div>
+  </div>
 </nav>
-<!-- Main Workspace -->
-<main class="max-w-container-max mx-auto px-gutter py-xl">
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-xl">
-<!-- Left Column: Source Payload -->
-<section class="flex flex-col gap-lg">
-<div class="bg-white rounded-xl shadow-sm p-xl min-h-[720px] flex flex-col border border-gray-100">
-<div class="flex flex-col gap-md mb-lg">
-<div class="flex justify-between items-center">
-<h2 class="font-title-md text-title-md text-primary">Raw CRM Input</h2>
-<div class="flex gap-2">
-<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface-container-low text-body-sm font-medium hover:bg-secondary-fixed-dim transition-colors duration-200" onclick="setSource('hubspot')">HubSpot</button>
-<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface-container-low text-body-sm font-medium hover:bg-secondary-fixed-dim transition-colors duration-200" onclick="setSource('salesforce')">Salesforce</button>
-<button class="px-4 py-1.5 rounded-full border border-outline-variant bg-surface-container-low text-body-sm font-medium hover:bg-secondary-fixed-dim transition-colors duration-200" onclick="setSource('messy')">Messy JSON</button>
-</div>
-</div>
-</div>
-<div class="flex-grow relative rounded-lg overflow-hidden border border-gray-100 bg-[#f9fafb]">
-<div class="absolute top-3 left-4 flex gap-1.5">
-<div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
-<div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
-<div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
-</div>
-<textarea class="w-full h-full pt-10 pb-4 px-4 bg-transparent border-none focus:ring-0 font-label-code text-label-code text-on-surface-variant resize-none overflow-auto code-container" id="source-payload" spellcheck="false">{
+
+<!-- ══ MAIN WORKSPACE ════════════════════════════════════════════════════════ -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <!-- ── LEFT: INPUT ──────────────────────────────────────────────────────── -->
+  <section class="flex flex-col">
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden" style="min-height:680px">
+
+      <!-- Card header -->
+      <div class="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-50">
+        <h2 class="font-display font-bold text-base text-gray-900">Raw CRM Input</h2>
+        <div class="flex gap-1.5">
+          <button id="btn-hubspot"    onclick="setPreset('hubspot')"
+            class="preset-btn px-3 py-1 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:bg-brand-light hover:border-brand hover:text-brand transition-all">
+            HubSpot
+          </button>
+          <button id="btn-salesforce" onclick="setPreset('salesforce')"
+            class="preset-btn px-3 py-1 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:bg-brand-light hover:border-brand hover:text-brand transition-all">
+            Salesforce
+          </button>
+          <button id="btn-messy"      onclick="setPreset('messy')"
+            class="preset-btn px-3 py-1 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:bg-brand-light hover:border-brand hover:text-brand transition-all">
+            Messy JSON
+          </button>
+
+          <!-- Import JSON -->
+          <label title="Import JSON file" class="cursor-pointer px-3 py-1 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">upload_file</span>
+            <span class="hidden sm:inline">Import</span>
+            <input id="json-import" type="file" accept=".json,application/json" class="hidden" onchange="importJSON(event)" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Editor -->
+      <div class="flex-1 relative bg-gray-50">
+        <!-- macOS dots -->
+        <div class="absolute top-3 left-4 flex gap-1.5 z-10 pointer-events-none">
+          <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+        </div>
+        <textarea
+          id="source-payload"
+          spellcheck="false"
+          class="w-full h-full pt-9 pb-4 px-4 bg-transparent border-none focus:ring-0 resize-none font-mono text-[13px] leading-relaxed text-gray-700 scroll"
+          style="min-height:520px"
+          placeholder='Paste your raw CRM JSON here, or pick a preset above…'
+        >{
   "source": "legacy_crm",
   "data": {
-    "fname": "  Johnathan  ",
-    "surname": "Doe-Smith",
-    "email_addr": "j.doe@enterprise-corp.io",
+    "fname": "  Alice  ",
+    "surname": "Nakamura",
+    "email_addr": "alice@acme.io",
     "cell_phone_v2": "+1 (555) 867-5309",
-    "company": "Enterprise Corp",
+    "company": "  Acme Corp  ",
     "tier": "PRO",
-    "signup_date": "20/11/2023",
+    "signup_date": "20/07/2025",
     "mrr_usd": "$4,200",
     "active": "yes",
     "country_code": "US"
   }
 }</textarea>
+      </div>
+
+      <!-- Execute button -->
+      <div class="px-6 py-5 border-t border-gray-50 flex items-center justify-between gap-3">
+        <p class="text-xs text-gray-400 hidden sm:block">
+          <kbd class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 font-mono">Ctrl</kbd> +
+          <kbd class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 font-mono">↵</kbd>
+          to run
+        </p>
+        <button
+          id="execute-btn"
+          onclick="executePipeline()"
+          class="flex-1 sm:flex-none bg-gray-900 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 shadow hover:bg-gray-700 active:scale-95 transition-all group">
+          <span id="btn-label">Execute Integration Pipeline</span>
+          <span class="group-hover:translate-x-0.5 transition-transform text-base">🚀</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── RIGHT: OUTPUT ─────────────────────────────────────────────────────── -->
+  <section class="flex flex-col">
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden" style="min-height:680px">
+
+      <!-- Card header -->
+      <div class="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-50">
+        <h2 class="font-display font-bold text-base text-gray-900">Normalized Canonical Output</h2>
+        <!-- Pipeline stage badges -->
+        <div class="flex gap-1.5 flex-wrap" id="stage-badges">
+          <span class="stage-badge flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider bg-white text-gray-400 border-gray-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block"></span>Cleaned
+          </span>
+          <span class="stage-badge flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider bg-white text-gray-400 border-gray-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block"></span>Mapped
+          </span>
+          <span class="stage-badge flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider bg-white text-gray-400 border-gray-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block"></span>Validated
+          </span>
+          <span class="stage-badge flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider bg-white text-gray-400 border-gray-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block"></span>Persisted
+          </span>
+        </div>
+      </div>
+
+      <!-- Dark output terminal -->
+      <div class="flex-1 bg-[#111827] relative flex flex-col">
+        <!-- Toolbar -->
+        <div class="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+          <span id="trace-display" class="font-mono text-[11px] text-gray-500">TRACE_ID: —</span>
+          <div class="flex items-center gap-3">
+            <button onclick="downloadOutput()" title="Download JSON"
+              class="text-gray-500 hover:text-white transition-colors flex items-center gap-1 text-[11px] font-mono">
+              <span class="material-symbols-outlined text-[16px]">download</span>
+              <span class="hidden sm:inline">Download</span>
+            </button>
+            <button onclick="copyOutput()" title="Copy JSON"
+              class="text-gray-500 hover:text-white transition-colors flex items-center gap-1 text-[11px] font-mono">
+              <span class="material-symbols-outlined text-[16px]">content_copy</span>
+              <span class="hidden sm:inline">Copy</span>
+            </button>
+          </div>
+        </div>
+        <!-- Code output -->
+        <pre class="flex-1 p-5 font-mono text-[13px] leading-relaxed overflow-auto scroll dark-scroll" id="output-pre"><code id="output-code" class="text-gray-500">// Output will appear here after execution.
+// Paste a raw CRM payload on the left, or
+// pick a preset, then click Execute.</code></pre>
+      </div>
+
+      <!-- Error banner -->
+      <div id="error-banner" class="hidden px-6 py-3 bg-red-50 border-t border-red-200 text-red-700 text-sm font-medium flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">error</span>
+        <span id="error-text"></span>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /grid -->
+
+<!-- ── BOTTOM BENTO ───────────────────────────────────────────────────────── -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+  <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+    <span class="material-symbols-outlined text-brand text-2xl">schema</span>
+    <h3 class="font-display font-bold text-sm text-gray-900">Auto-Schema Detection</h3>
+    <p class="text-xs text-gray-500 leading-relaxed">Intelligently identifies and normalises field types even in deeply nested messy structures.</p>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+    <span class="material-symbols-outlined text-purple-500 text-2xl">memory</span>
+    <h3 class="font-display font-bold text-sm text-gray-900">Neural Column Mapping</h3>
+    <p class="text-xs text-gray-500 leading-relaxed">Powered by Google Gemini 2.0 Flash — maps <code class="font-mono bg-gray-100 px-1 rounded">cell_phone_v2</code> → <code class="font-mono bg-gray-100 px-1 rounded">phone_number</code> automatically.</p>
+  </div>
+  <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+    <span class="material-symbols-outlined text-emerald-500 text-2xl">history</span>
+    <h3 class="font-display font-bold text-sm text-gray-900">Upsert & Audit Trails</h3>
+    <p class="text-xs text-gray-500 leading-relaxed">Re-submitting an existing email updates the record gracefully — no duplicates, no 500 errors, full UUID trace per sync.</p>
+  </div>
 </div>
-<div class="mt-xl flex justify-center">
-<button id="execute-btn" class="bg-primary text-on-primary px-xl py-lg rounded-full font-headline-lg-mobile text-body-lg flex items-center gap-3 shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-200 group" onclick="executePipeline()">
-<span>Execute Integration Pipeline</span>
-<span class="group-hover:translate-x-1 transition-transform">🚀</span>
-</button>
-</div>
-</div>
-</section>
-<!-- Right Column: Engine Output -->
-<section class="flex flex-col gap-lg">
-<div class="bg-white rounded-xl shadow-sm p-xl min-h-[720px] flex flex-col border border-gray-100 relative overflow-hidden">
-<!-- Subtle Glow Effect -->
-<div class="absolute -top-24 -right-24 w-64 h-64 bg-secondary/5 rounded-full blur-3xl pointer-events-none"></div>
-<div class="flex flex-col gap-md mb-lg relative z-10">
-<h2 class="font-title-md text-title-md text-primary">Normalized Canonical Output</h2>
-<div class="flex flex-wrap gap-2" id="stage-badges">
-<div class="pipeline-stage flex items-center gap-2 px-2.5 py-1 bg-white text-gray-700 rounded-lg border border-gray-200 shadow-sm">
-<div class="w-1.5 h-1.5 rounded-full bg-gray-400" id="badge-cleaned-dot"></div>
-<span class="text-[11px] font-bold uppercase tracking-wider">Cleaned</span>
-</div>
-<div class="pipeline-stage flex items-center gap-2 px-2.5 py-1 bg-white text-secondary rounded-lg border border-secondary/20 shadow-sm">
-<div class="w-1.5 h-1.5 rounded-full bg-secondary" id="badge-mapped-dot"></div>
-<span class="text-[11px] font-bold uppercase tracking-wider">Mapped</span>
-</div>
-<div class="pipeline-stage flex items-center gap-2 px-2.5 py-1 bg-white text-blue-700 rounded-lg border border-blue-200 shadow-sm">
-<div class="w-1.5 h-1.5 rounded-full bg-blue-500" id="badge-validated-dot"></div>
-<span class="text-[11px] font-bold uppercase tracking-wider">Validated</span>
-</div>
-<div class="pipeline-stage flex items-center gap-2 px-2.5 py-1 bg-white text-emerald-700 rounded-lg border border-emerald-200 shadow-sm">
-<div class="w-1.5 h-1.5 rounded-full bg-emerald-500" id="badge-persisted-dot"></div>
-<span class="text-[11px] font-bold uppercase tracking-wider">Persisted</span>
-</div>
-</div>
-</div>
-<div class="flex-grow rounded-lg overflow-hidden border border-gray-100 bg-[#111827] shadow-inner relative">
-<div class="absolute top-3 right-4 flex items-center gap-4 text-gray-500 font-label-code text-[11px]" id="trace-bar">
-<span id="trace-id-display">TRACE_ID: waiting...</span>
-<button class="hover:text-white transition-colors" onclick="copyOutput()" title="Copy output">
-<span class="material-symbols-outlined text-[18px]">content_copy</span>
-</button>
-</div>
-<pre class="w-full h-full p-xl font-label-code text-label-code overflow-auto code-container" id="output-pre"><code id="output-code" class="text-gray-500">// Output will appear here after execution.
-// Paste your raw CRM payload on the left,
-// then click Execute Integration Pipeline.</code></pre>
-</div>
-<!-- Error banner -->
-<div id="error-banner" class="hidden mt-md p-md bg-red-50 border border-red-200 rounded-lg text-red-700 text-body-sm font-medium"></div>
-</div>
-</section>
-</div>
-<!-- Bottom Bento Grid -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-lg mt-2xl">
-<div class="bg-white p-lg rounded-xl shadow-sm border border-gray-100 flex flex-col gap-sm">
-<span class="material-symbols-outlined text-secondary">schema</span>
-<h3 class="font-title-md text-body-lg font-bold">Auto-Schema Detection</h3>
-<p class="text-body-sm text-on-surface-variant">Intelligently identifies field types even in deeply nested messy structures.</p>
-</div>
-<div class="bg-white p-lg rounded-xl shadow-sm border border-gray-100 flex flex-col gap-sm">
-<span class="material-symbols-outlined text-purple-500">memory</span>
-<h3 class="font-title-md text-body-lg font-bold">Neural Mapping</h3>
-<p class="text-body-sm text-on-surface-variant">Powered by Google Gemini 2.0 Flash for zero-shot data transformations.</p>
-</div>
-<div class="bg-white p-lg rounded-xl shadow-sm border border-gray-100 flex flex-col gap-sm">
-<span class="material-symbols-outlined text-emerald-500">history</span>
-<h3 class="font-title-md text-body-lg font-bold">Audit Trails</h3>
-<p class="text-body-sm text-on-surface-variant">Immutable UUID trace logs for every field transformation and mapping decision.</p>
-</div>
-</div>
+
 </main>
 
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ══ SCRIPTS ════════════════════════════════════════════════════════════════ -->
 <script>
-    const payloads = {
-        hubspot: `{
-  "source": "hubspot",
-  "data": {
-    "firstname": "Johnathan",
-    "lastname": "Doe-Smith",
-    "email": "j.doe@enterprise-corp.io",
-    "cell_phone_v2": "+1 (555) 867-5309",
-    "company": "Enterprise Corp",
-    "lifecyclestage": "customer",
-    "signup_date": "2023-11-20",
-    "mrr_usd": "$4,200",
-    "hs_lead_status": "CLOSED_WON",
-    "active": "yes"
+// ── Preset payloads ─────────────────────────────────────────────────────────
+const PRESETS = {
+  hubspot: {
+    source: "hubspot",
+    data: {
+      firstname: "Johnathan",
+      lastname: "Doe-Smith",
+      email: "j.doe@enterprise-corp.io",
+      cell_phone_v2: "+1 (555) 867-5309",
+      company: "Enterprise Corp",
+      tier: "pro",
+      signup_date: "2024-03-15",
+      mrr_usd: "$6,500",
+      active: "yes",
+      country_code: "US"
+    }
+  },
+  salesforce: {
+    source: "salesforce",
+    data: {
+      FirstName: "Priya",
+      LastName: "Sharma",
+      Email: "priya.sharma@globex.in",
+      MobilePhone: "+91 98765 43210",
+      account_name: "Globex Solutions",
+      Subscription_Plan__c: "enterprise",
+      CreatedDate: "2024-01-10T09:30:00Z",
+      MRR__c: "12500",
+      IsActive__c: true,
+      BillingCountry: "India"
+    }
+  },
+  messy: {
+    source: "legacy_csv",
+    data: {
+      "fname": "  ALICE  ",
+      "lname": "NAKAMURA",
+      "email_address": "alice@acme.io",
+      "cell_phone_v2": "+1 (555) 867-5309",
+      "business_name": "  Acme Corp  ",
+      "tier": "GOLD",
+      "signup_date": "20/07/2025",
+      "monthly_revenue": "$8,750",
+      "active": "1",
+      "country_code": "US"
+    }
   }
-}`,
-        salesforce: `{
-  "source": "salesforce",
-  "data": {
-    "FirstName": "Johnathan",
-    "LastName": "Doe-Smith",
-    "Email": "j.doe@enterprise-corp.io",
-    "MobilePhone": "+1 (555) 867-5309",
-    "account_name": "Enterprise Corp",
-    "Subscription_Plan__c": "enterprise",
-    "CreatedDate": "2023-11-20T09:30:00Z",
-    "MRR__c": "12500",
-    "IsActive__c": true,
-    "BillingCountry": "United States"
+};
+
+// Stage badge config
+const STAGE_CONFIG = [
+  { label: 'Cleaned',   color: 'text-gray-700',   dot: 'bg-gray-500',    border: 'border-gray-300'   },
+  { label: 'Mapped',    color: 'text-brand',       dot: 'bg-brand',       border: 'border-brand/30'   },
+  { label: 'Validated', color: 'text-blue-700',    dot: 'bg-blue-500',    border: 'border-blue-200'   },
+  { label: 'Persisted', color: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200'},
+];
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function showToast(msg, duration = 2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function syntaxHighlight(json) {
+  const esc = json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return esc.replace(
+    /("(?:\\u[a-f0-9]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/gi,
+    m => {
+      if (/^"/.test(m)) return /:$/.test(m)
+        ? `<span class="text-blue-400">${m}</span>`
+        : `<span class="text-orange-300">${m}</span>`;
+      if (/true|false/.test(m)) return `<span class="text-emerald-400">${m}</span>`;
+      if (/null/.test(m))        return `<span class="text-red-400">${m}</span>`;
+      return `<span class="text-purple-400">${m}</span>`;
+    }
+  );
+}
+
+function activateBadges(upTo = 4) {
+  const badges = document.querySelectorAll('.stage-badge');
+  badges.forEach((b, i) => {
+    if (i < upTo) {
+      const c = STAGE_CONFIG[i];
+      b.className = `stage-badge badge-anim flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider bg-white ${c.color} ${c.border}`;
+      b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${c.dot} inline-block"></span>${c.label}`;
+    }
+  });
+}
+
+function resetBadges() {
+  document.querySelectorAll('.stage-badge').forEach((b, i) => {
+    b.className = 'stage-badge flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider bg-white text-gray-400 border-gray-200';
+    b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block"></span>${STAGE_CONFIG[i].label}`;
+  });
+}
+
+// ── Preset buttons ───────────────────────────────────────────────────────────
+function setPreset(key) {
+  document.getElementById('source-payload').value = JSON.stringify(PRESETS[key], null, 2);
+
+  // Highlight active preset button
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.remove('bg-brand-light', 'border-brand', 'text-brand');
+  });
+  document.getElementById(`btn-${key}`)?.classList.add('bg-brand-light', 'border-brand', 'text-brand');
+
+  resetBadges();
+  document.getElementById('error-banner').classList.add('hidden');
+  document.getElementById('trace-display').textContent = 'TRACE_ID: —';
+  document.getElementById('output-code').className = 'text-gray-500';
+  document.getElementById('output-code').innerHTML = `// ${key.charAt(0).toUpperCase()+key.slice(1)} preset loaded.\n// Click Execute to run the pipeline.`;
+}
+
+// ── Import JSON from file ────────────────────────────────────────────────────
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      document.getElementById('source-payload').value = JSON.stringify(parsed, null, 2);
+      showToast(`✅ Imported ${file.name}`);
+      // Reset preset buttons
+      document.querySelectorAll('.preset-btn').forEach(b =>
+        b.classList.remove('bg-brand-light', 'border-brand', 'text-brand'));
+    } catch {
+      showToast('❌ Invalid JSON file');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // allow re-import same file
+}
+
+// ── Copy output ──────────────────────────────────────────────────────────────
+function copyOutput() {
+  const text = document.getElementById('output-code').innerText;
+  if (!text || text.startsWith('//')) { showToast('Nothing to copy yet'); return; }
+  navigator.clipboard.writeText(text).then(() => showToast('✅ Copied to clipboard!'));
+}
+
+// ── Download output ──────────────────────────────────────────────────────────
+function downloadOutput() {
+  const text = document.getElementById('output-code').innerText;
+  if (!text || text.startsWith('//')) { showToast('Nothing to download yet'); return; }
+  try {
+    JSON.parse(text); // validate
+    const blob = new Blob([text], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'normalized_output.json'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('💾 Downloaded normalized_output.json');
+  } catch { showToast('❌ Output is not valid JSON'); }
+}
+
+// ── Execute pipeline ─────────────────────────────────────────────────────────
+async function executePipeline() {
+  const btn   = document.getElementById('execute-btn');
+  const label = document.getElementById('btn-label');
+  const code  = document.getElementById('output-code');
+  const pre   = document.getElementById('output-pre');
+  const trace = document.getElementById('trace-display');
+  const errBanner = document.getElementById('error-banner');
+  const errText   = document.getElementById('error-text');
+
+  // Hide previous error
+  errBanner.classList.add('hidden');
+
+  // Parse input
+  let payload;
+  try {
+    payload = JSON.parse(document.getElementById('source-payload').value);
+  } catch {
+    errText.textContent = 'Invalid JSON in input. Fix the syntax and try again.';
+    errBanner.classList.remove('hidden');
+    return;
   }
-}`,
-        messy: `{
-  "source": "legacy_csv",
-  "data": {
-    "fname": "  JOHNATHAN  ",
-    "lname": "DOE-SMITH",
-    "email_address": "j.doe@enterprise-corp.io",
-    "cell_phone_v2": "+1 (555) 867-5309",
-    "business_name": "Enterprise Corp",
-    "tier": "GOLD",
-    "signup_date": "20/11/2023",
-    "monthly_revenue": "$8,750",
-    "active": "1",
-    "country_code": "US"
-  }
-}`
-    };
 
-    function setSource(type) {
-        document.getElementById('source-payload').value = payloads[type];
-        const buttons = document.querySelectorAll('button[onclick^="setSource"]');
-        buttons.forEach(btn => {
-            btn.classList.remove('bg-secondary-fixed', 'border-secondary', 'text-secondary');
-            if (btn.innerText.toLowerCase().includes(type.toLowerCase())) {
-                btn.classList.add('bg-secondary-fixed', 'border-secondary', 'text-secondary');
-            }
-        });
-    }
+  // Loading state
+  btn.disabled = true;
+  label.textContent = 'Processing…';
+  resetBadges();
+  code.className = 'text-gray-400';
+  code.textContent = '// Running pipeline…';
+  trace.textContent = 'TRACE_ID: processing…';
 
-    function syntaxHighlight(json) {
-        const escaped = json
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-        return escaped.replace(
-            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-            match => {
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) return `<span class="text-blue-400">${match}</span>`;
-                    return `<span class="text-orange-300">${match}</span>`;
-                }
-                if (/true|false/.test(match)) return `<span class="text-emerald-400">${match}</span>`;
-                if (/null/.test(match))       return `<span class="text-red-400">${match}</span>`;
-                return `<span class="text-purple-400">${match}</span>`;
-            }
-        );
-    }
-
-    async function executePipeline() {
-        const btn = document.getElementById('execute-btn');
-        const outputCode = document.getElementById('output-code');
-        const traceDisplay = document.getElementById('trace-id-display');
-        const errorBanner = document.getElementById('error-banner');
-        const stages = document.querySelectorAll('.pipeline-stage');
-
-        // Hide previous error
-        errorBanner.classList.add('hidden');
-        errorBanner.textContent = '';
-
-        // Parse input
-        let payload;
-        try {
-            payload = JSON.parse(document.getElementById('source-payload').value);
-        } catch (e) {
-            errorBanner.textContent = '❌ Invalid JSON in input. Please check your payload format.';
-            errorBanner.classList.remove('hidden');
-            return;
-        }
-
-        // Loading state
-        btn.disabled = true;
-        btn.innerHTML = '<span class="animate-spin inline-block material-symbols-outlined text-[20px]">sync</span> <span>Processing...</span>';
-        outputCode.className = 'text-gray-400';
-        outputCode.innerHTML = '// Executing pipeline...';
-        traceDisplay.textContent = 'TRACE_ID: processing...';
-        stages.forEach(s => s.classList.remove('active'));
-
-        try {
-            const response = await fetch('/api/v1/sync', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.detail || `HTTP ${response.status}`);
-            }
-
-            // Animate stages sequentially
-            const stageNames = ['Cleaned', 'Mapped', 'Validated', 'Persisted'];
-            for (let i = 0; i < stages.length; i++) {
-                await new Promise(r => setTimeout(r, 200));
-                stages[i].classList.add('active');
-            }
-
-            // Update trace ID
-            traceDisplay.textContent = `TRACE_ID: ${result.trace_id?.slice(0, 18) || 'n/a'}`;
-
-            // Display result
-            outputCode.className = 'text-green-400';
-            outputCode.innerHTML = syntaxHighlight(JSON.stringify(result, null, 2));
-
-        } catch (err) {
-            outputCode.className = 'text-red-400';
-            outputCode.innerHTML = `// Pipeline error\n// ${err.message}`;
-            errorBanner.textContent = `❌ ${err.message}`;
-            errorBanner.classList.remove('hidden');
-            traceDisplay.textContent = 'TRACE_ID: error';
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<span>Execute Integration Pipeline</span><span class="group-hover:translate-x-1 transition-transform">🚀</span>';
-        }
-    }
-
-    function copyOutput() {
-        const text = document.getElementById('output-code').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = document.querySelector('button[onclick="copyOutput()"]');
-            btn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-emerald-400">check</span>';
-            setTimeout(() => {
-                btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">content_copy</span>';
-            }, 1500);
-        });
-    }
-
-    // Allow Ctrl+Enter to execute
-    document.getElementById('source-payload').addEventListener('keydown', e => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') executePipeline();
+  try {
+    const resp = await fetch('/api/v1/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
+
+    const result = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(result.message || `HTTP ${resp.status}`);
+    }
+
+    // Animate stage badges sequentially
+    for (let i = 1; i <= 4; i++) {
+      await new Promise(r => setTimeout(r, 180));
+      activateBadges(i);
+    }
+
+    // Update trace
+    const shortTrace = result.trace_id?.slice(0, 22) || 'n/a';
+    trace.textContent = `TRACE_ID: ${shortTrace}…`;
+
+    // Render output
+    code.className = 'text-green-400';
+    code.innerHTML = syntaxHighlight(JSON.stringify(result, null, 2));
+
+  } catch (err) {
+    resetBadges();
+    code.className = 'text-red-400';
+    code.textContent = `// Pipeline error\n// ${err.message}`;
+    trace.textContent = 'TRACE_ID: error';
+    errText.textContent = err.message;
+    errBanner.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    label.textContent = 'Execute Integration Pipeline';
+  }
+}
+
+// ── Keyboard shortcut Ctrl/Cmd+Enter ────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    executePipeline();
+  }
+});
 </script>
-</body></html>
+</body>
+</html>
