@@ -79,10 +79,6 @@
         <span class="w-2 h-2 rounded-full bg-emerald-400 status-pulse inline-block"></span>
         <span class="hidden sm:inline">System: Healthy</span>
       </div>
-      <a href="/docs" target="_blank" rel="noopener"
-         class="bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 rounded-full hover:bg-gray-700 active:scale-95 transition-all no-underline">
-        Console
-      </a>
     </div>
   </div>
 </nav>
@@ -108,7 +104,7 @@
             Salesforce
           </button>
           <button id="btn-messy"      onclick="setPreset('messy')"
-            class="preset-btn px-3 py-1 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:bg-brand-light hover:border-brand hover:text-brand transition-all">
+            class="preset-btn px-3 py-1 rounded-full border border-brand text-xs font-medium text-brand bg-brand-light transition-all">
             Messy JSON
           </button>
 
@@ -354,6 +350,17 @@ function resetBadges() {
 
 // ── Preset buttons ───────────────────────────────────────────────────────────
 function setPreset(key) {
+  if (key === 'hubspot' || key === 'salesforce') {
+    const name = key === 'hubspot' ? 'HubSpot' : 'Salesforce';
+    showToast(`⚡ Future Integration: ${name} connector coming soon.`, 3000);
+    // Keep Messy JSON active
+    document.querySelectorAll('.preset-btn').forEach(b => {
+      b.classList.remove('bg-brand-light', 'border-brand', 'text-brand');
+    });
+    document.getElementById('btn-messy')?.classList.add('bg-brand-light', 'border-brand', 'text-brand');
+    return;
+  }
+
   document.getElementById('source-payload').value = JSON.stringify(PRESETS[key], null, 2);
 
   // Highlight active preset button
